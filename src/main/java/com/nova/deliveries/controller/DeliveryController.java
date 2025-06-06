@@ -51,5 +51,11 @@ public class DeliveryController {
     public ResponseEntity<List<DeliveryResponseDTO>> obtenerPorOrden(@PathVariable Long ordenId) {
         return ResponseEntity.ok(entregaService.obtenerPorOrden(ordenId));
     }
+
+    // Listar todas las entregas
+    @GetMapping
+    public ResponseEntity<List<DeliveryResponseDTO>> listarTodasLasEntregas() {
+        return ResponseEntity.ok(entregaService.listarTodasLasEntregas());
+    }
 }
 

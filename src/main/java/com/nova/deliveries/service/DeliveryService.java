@@ -73,5 +73,11 @@ public class DeliveryService {
         dto.setEstado(entrega.getEstado());
         return dto;
     }
+
+    public List<DeliveryResponseDTO> listarTodasLasEntregas() {
+        return entregaRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
 }
 
