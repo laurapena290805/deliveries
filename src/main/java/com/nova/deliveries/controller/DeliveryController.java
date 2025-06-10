@@ -6,6 +6,8 @@ import com.nova.deliveries.entity.Delivery;
 import com.nova.deliveries.entity.DeliveryStatus;
 import com.nova.deliveries.service.DeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +58,11 @@ public class DeliveryController {
     @GetMapping
     public ResponseEntity<List<DeliveryResponseDTO>> listarTodasLasEntregas() {
         return ResponseEntity.ok(entregaService.listarTodasLasEntregas());
+    }
+
+    @GetMapping("/paginado")
+    public ResponseEntity<Page<DeliveryResponseDTO>> listarEntregasPaginadas(Pageable pageable) {
+        return ResponseEntity.ok(entregaService.listarEntregasPaginado(pageable));
     }
 }
 
