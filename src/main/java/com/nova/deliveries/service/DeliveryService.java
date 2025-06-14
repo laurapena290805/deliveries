@@ -10,6 +10,8 @@ import com.nova.deliveries.entity.DeliveryStatus;
 import com.nova.deliveries.repository.DeliveryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -163,6 +165,11 @@ public class DeliveryService {
         return entregaRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public Page<DeliveryResponseDTO> listarEntregasPaginado(Pageable pageable) {
+        return entregaRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
 }
 
