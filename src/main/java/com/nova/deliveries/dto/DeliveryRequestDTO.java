@@ -11,5 +11,6 @@ public class DeliveryRequestDTO {
     private Long ordenId;
     private String direccion;
     private LocalDate fechaEstimada;
+    private Long repartidorId; // Nuevo campo
+    private boolean solicitarAsignacion; // Nuevo campo
 }
-

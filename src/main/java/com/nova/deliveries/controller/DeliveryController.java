@@ -24,9 +24,14 @@ public class DeliveryController {
     @PostMapping
     public ResponseEntity<?> crearEntrega(@RequestBody Map<String, Object> requestMap) {
         try {
+            System.out.println("➡️ Request recibido: " + requestMap);
+
             Long ordenId = Long.parseLong(requestMap.get("ordenId").toString());
             String direccion = (String) requestMap.get("direccion");
-            LocalDate fechaEstimada = LocalDate.parse(requestMap.get("fechaEstimada").toString());
+            String fechaRaw = requestMap.get("fechaEstimada").toString();
+            System.out.println("📅 Fecha recibida: " + fechaRaw);
+
+            LocalDate fechaEstimada = LocalDate.parse(fechaRaw);
 
             DeliveryRequestDTO dto = new DeliveryRequestDTO();
             dto.setOrdenId(ordenId);
@@ -35,9 +40,11 @@ public class DeliveryController {
 
             return new ResponseEntity<>(entregaService.crearEntrega(dto), HttpStatus.CREATED);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Formato de datos inválido");
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Formato de datos inválido: " + e.getMessage());
         }
     }
+
 
     @PatchMapping("/{id}/estado")
     public ResponseEntity<DeliveryResponseDTO> cambiarEstado(
@@ -56,6 +63,33 @@ public class DeliveryController {
     @GetMapping
     public ResponseEntity<List<DeliveryResponseDTO>> listarTodasLasEntregas() {
         return ResponseEntity.ok(entregaService.listarTodasLasEntregas());
+    }
+
+    // DeliveryController.java - Agregar nuevos endpoints
+    @PostMapping("/{id}/asignar-repartidor")
+    public ResponseEntity<DeliveryResponseDTO> asignarRepartidor(
+            @PathVariable Long id,
+            @RequestParam Long repartidorId,
+            @RequestParam(required = false, defaultValue = "false") boolean solicitarAprobacion) {
+
+        DeliveryRequestDTO dto = new DeliveryRequestDTO();
+        dto.setRepartidorId(repartidorId);
+        dto.setSolicitarAsignacion(solicitarAprobacion);
+
+        return ResponseEntity.ok(entregaService.asignarRepartidor(id, dto));
+    }
+
+    @PatchMapping("/{id}/aprobar-repartidor")
+    public ResponseEntity<DeliveryResponseDTO> aprobarRepartidor(@PathVariable Long id) {
+        return ResponseEntity.ok(entregaService.aprobarRepartidor(id));
+    }
+
+    @GetMapping("/repartidor/{repartidorId}")
+    public ResponseEntity<List<DeliveryResponseDTO>> obtenerPorRepartidor(
+            @PathVariable Long repartidorId,
+            @RequestParam(required = false) boolean pendientes) {
+
+        return ResponseEntity.ok(entregaService.obtenerPorRepartidor(repartidorId, pendientes));
     }
 }
 

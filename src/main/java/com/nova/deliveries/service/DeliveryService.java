@@ -1,8 +1,10 @@
 package com.nova.deliveries.service;
 
 import com.nova.deliveries.client.OrderClient;
+import com.nova.deliveries.client.UserClient;
 import com.nova.deliveries.dto.DeliveryRequestDTO;
 import com.nova.deliveries.dto.DeliveryResponseDTO;
+import com.nova.deliveries.dto.OrderResponseDTO;
 import com.nova.deliveries.entity.Delivery;
 import com.nova.deliveries.entity.DeliveryStatus;
 import com.nova.deliveries.repository.DeliveryRepository;
@@ -19,34 +21,105 @@ public class DeliveryService {
 
     @Autowired
     private DeliveryRepository entregaRepository;
+    private UserClient userClient;
 
     @Autowired
     private OrderClient orderClient;
 
+    // DeliveryService.java - Modificar el método crearEntrega
     public DeliveryResponseDTO crearEntrega(DeliveryRequestDTO requestDTO) {
-        System.out.println("DEBUG - DTO en Service:");
-        System.out.println("OrdenID: " + requestDTO.getOrdenId());
+        // Verificar que la orden existe y está lista
+        OrderResponseDTO orden = orderClient.getOrderStatus(requestDTO.getOrdenId());
+        //if (!"LISTA".equalsIgnoreCase(orden.getStatus())) {
+          //  throw new IllegalArgumentException("La orden con ID " + requestDTO.getOrdenId() +
+            //        " no está lista para entrega. Estado actual: " + orden.getStatus());
+        //}
 
-        if (requestDTO.getOrdenId() == null) {
-            throw new IllegalArgumentException("El ID de la orden es nulo en el servicio");
-        }
-        try {
-            if (!orderClient.existsOrder(requestDTO.getOrdenId())) {
-                throw new IllegalArgumentException("La orden con ID " + requestDTO.getOrdenId() + " no existe");
+        Delivery delivery = new Delivery();
+        delivery.setOrdenId(requestDTO.getOrdenId());
+        delivery.setDireccion(requestDTO.getDireccion());
+        delivery.setFechaEstimada(requestDTO.getFechaEstimada());
+        delivery.setEstado(DeliveryStatus.PENDIENTE);
+
+        // Manejo del repartidor
+        if (requestDTO.getRepartidorId() != null) {
+            if (requestDTO.isSolicitarAsignacion()) {
+                delivery.setAsignacionPendiente(true);
+                delivery.setRepartidorId(requestDTO.getRepartidorId());
+            } else {
+                // Aquí deberías verificar que el usuario tiene rol de repartidor
+                // Esto requeriría integración con el servicio de usuarios
+                delivery.setRepartidorId(requestDTO.getRepartidorId());
             }
-
-            Delivery delivery = new Delivery();
-            delivery.setOrdenId(requestDTO.getOrdenId());
-            delivery.setDireccion(requestDTO.getDireccion());
-            delivery.setFechaEstimada(requestDTO.getFechaEstimada());
-            delivery.setEstado(DeliveryStatus.PENDIENTE);
-
-            Delivery saved = entregaRepository.save(delivery);
-
-            return mapToDTO(saved);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Error al crear la entrega: " + e.getMessage(), e);
         }
+
+        Delivery saved = entregaRepository.save(delivery);
+        return mapToDTO(saved);
+    }
+
+    // Agregar método para aprobar repartidor
+    public DeliveryResponseDTO aprobarRepartidor(Long deliveryId) {
+        Delivery delivery = entregaRepository.findById(deliveryId)
+                .orElseThrow(() -> new RuntimeException("Entrega no encontrada"));
+
+        if (!delivery.isAsignacionPendiente()) {
+            throw new IllegalArgumentException("Esta entrega no tiene asignaciones pendientes");
+        }
+
+        delivery.setAsignacionPendiente(false);
+        return mapToDTO(entregaRepository.save(delivery));
+    }
+
+    // DeliveryService.java - Métodos adicionales
+    public DeliveryResponseDTO asignarRepartidor(Long deliveryId, DeliveryRequestDTO requestDTO) {
+        // Verificar que la entrega existe
+        Delivery delivery = entregaRepository.findById(deliveryId)
+                .orElseThrow(() -> new RuntimeException("Entrega no encontrada"));
+
+        // Verificar que el usuario es repartidor (integrado con servicio de usuarios)
+        if (requestDTO.getRepartidorId() != null && !userClient.isRepartidor(requestDTO.getRepartidorId())) {
+            throw new IllegalArgumentException("El usuario con ID " + requestDTO.getRepartidorId() +
+                    " no tiene rol de repartidor");
+        }
+
+        // Si es solicitud de asignación (necesita aprobación)
+        if (requestDTO.isSolicitarAsignacion()) {
+            delivery.setAsignacionPendiente(true);
+            delivery.setRepartidorId(requestDTO.getRepartidorId());
+            delivery.setEstado(DeliveryStatus.PENDIENTE_APROBACION);
+        }
+        // Si es asignación directa (por admin)
+        else {
+            delivery.setRepartidorId(requestDTO.getRepartidorId());
+            delivery.setAsignacionPendiente(false);
+            delivery.setEstado(DeliveryStatus.EN_CAMINO);
+        }
+
+        Delivery updated = entregaRepository.save(delivery);
+        return mapToDTO(updated);
+    }
+
+    public List<DeliveryResponseDTO> obtenerPorRepartidor(Long repartidorId, boolean soloPendientes) {
+        List<Delivery> deliveries;
+
+        if (soloPendientes) {
+            // Entregas asignadas a este repartidor que están pendientes de aprobación
+            deliveries = entregaRepository.findByRepartidorIdAndAsignacionPendiente(repartidorId, true);
+        } else {
+            // Todas las entregas asignadas a este repartidor
+            deliveries = entregaRepository.findByRepartidorId(repartidorId);
+        }
+
+        return deliveries.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<DeliveryResponseDTO> obtenerEntregasPendientesAprobacion() {
+        // Para que el administrador vea qué entregas necesitan aprobación
+        return entregaRepository.findByAsignacionPendiente(true).stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
 
@@ -71,6 +144,18 @@ public class DeliveryService {
         dto.setDireccion(entrega.getDireccion());
         dto.setFechaEstimada(entrega.getFechaEstimada());
         dto.setEstado(entrega.getEstado());
+        dto.setRepartidorId(entrega.getRepartidorId());
+        dto.setAsignacionPendiente(entrega.isAsignacionPendiente());
+
+        // Opcional: Obtener nombre del repartidor desde el servicio de usuarios
+        if (entrega.getRepartidorId() != null) {
+            try {
+                dto.setNombreRepartidor(userClient.getUserName(entrega.getRepartidorId()));
+            } catch (Exception e) {
+                dto.setNombreRepartidor("Desconocido");
+            }
+        }
+
         return dto;
     }
 

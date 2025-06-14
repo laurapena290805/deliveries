@@ -16,5 +16,8 @@ public class DeliveryResponseDTO {
     private String direccion;
     private LocalDate fechaEstimada;
     private DeliveryStatus estado;
+    private Long repartidorId; // Nuevo campo
+    private boolean asignacionPendiente; // Nuevo campo
+    private String nombreRepartidor; // Podría obtenerse de un servicio de usuarios
 }
 
