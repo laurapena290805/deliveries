@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class OrderResponseDTO {
     private Long orderId;
-    private String status;
+    private String estado;
     private String shippingAddress;
     private LocalDateTime createdAt;
     private List<OrderItemResponseDTO> items; // Necesitas definir esta clase también

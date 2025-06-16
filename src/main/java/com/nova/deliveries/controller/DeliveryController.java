@@ -2,7 +2,6 @@ package com.nova.deliveries.controller;
 
 import com.nova.deliveries.dto.DeliveryRequestDTO;
 import com.nova.deliveries.dto.DeliveryResponseDTO;
-import com.nova.deliveries.entity.Delivery;
 import com.nova.deliveries.entity.DeliveryStatus;
 import com.nova.deliveries.service.DeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,7 @@ import java.util.Map;
 public class DeliveryController {
 
     @Autowired
-    private DeliveryService entregaService;
+    private DeliveryService deliveryService;
 
     @PostMapping
     public ResponseEntity<?> crearEntrega(@RequestBody Map<String, Object> requestMap) {
@@ -38,58 +37,56 @@ public class DeliveryController {
             dto.setDireccion(direccion);
             dto.setFechaEstimada(fechaEstimada);
 
-            return new ResponseEntity<>(entregaService.crearEntrega(dto), HttpStatus.CREATED);
+            return new ResponseEntity<>(deliveryService.crearEntrega(dto), HttpStatus.CREATED);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Formato de datos inválido: " + e.getMessage());
         }
     }
 
-
     @PatchMapping("/{id}/estado")
     public ResponseEntity<DeliveryResponseDTO> cambiarEstado(
             @PathVariable Long id,
-            @RequestParam DeliveryStatus estado
-    ) {
-        return ResponseEntity.ok(entregaService.cambiarEstado(id, estado));
+            @RequestParam DeliveryStatus estado) {
+        return ResponseEntity.ok(deliveryService.cambiarEstado(id, estado));
     }
 
     @GetMapping("/orden/{ordenId}")
     public ResponseEntity<List<DeliveryResponseDTO>> obtenerPorOrden(@PathVariable Long ordenId) {
-        return ResponseEntity.ok(entregaService.obtenerPorOrden(ordenId));
+        return ResponseEntity.ok(deliveryService.obtenerPorOrden(ordenId));
     }
 
-    // Listar todas las entregas
     @GetMapping
     public ResponseEntity<List<DeliveryResponseDTO>> listarTodasLasEntregas() {
-        return ResponseEntity.ok(entregaService.listarTodasLasEntregas());
+        return ResponseEntity.ok(deliveryService.listarTodasLasEntregas());
     }
 
-    // DeliveryController.java - Agregar nuevos endpoints
-    @PostMapping("/{id}/asignar-repartidor")
+    // Asignar repartidor (para administradores)
+    @PostMapping("/{id}/asignar-repartidor/{repartidorId}")
     public ResponseEntity<DeliveryResponseDTO> asignarRepartidor(
             @PathVariable Long id,
-            @RequestParam Long repartidorId,
-            @RequestParam(required = false, defaultValue = "false") boolean solicitarAprobacion) {
-
-        DeliveryRequestDTO dto = new DeliveryRequestDTO();
-        dto.setRepartidorId(repartidorId);
-        dto.setSolicitarAsignacion(solicitarAprobacion);
-
-        return ResponseEntity.ok(entregaService.asignarRepartidor(id, dto));
+            @PathVariable Long repartidorId) {
+        return ResponseEntity.ok(deliveryService.asignarRepartidor(id, repartidorId));
     }
 
-    @PatchMapping("/{id}/aprobar-repartidor")
-    public ResponseEntity<DeliveryResponseDTO> aprobarRepartidor(@PathVariable Long id) {
-        return ResponseEntity.ok(entregaService.aprobarRepartidor(id));
+    // Escoger entrega (para repartidores)
+    @PostMapping("/{id}/escoger-entrega/{repartidorId}")
+    public ResponseEntity<DeliveryResponseDTO> escogerEntrega(
+            @PathVariable Long id,
+            @PathVariable Long repartidorId) {
+        return ResponseEntity.ok(deliveryService.escogerEntrega(repartidorId, id));
     }
 
+    // Obtener entregas disponibles (para repartidores)
+    @GetMapping("/disponibles")
+    public ResponseEntity<List<DeliveryResponseDTO>> obtenerEntregasDisponibles() {
+        return ResponseEntity.ok(deliveryService.obtenerEntregasDisponibles());
+    }
+
+    // Obtener entregas de un repartidor
     @GetMapping("/repartidor/{repartidorId}")
-    public ResponseEntity<List<DeliveryResponseDTO>> obtenerPorRepartidor(
-            @PathVariable Long repartidorId,
-            @RequestParam(required = false) boolean pendientes) {
-
-        return ResponseEntity.ok(entregaService.obtenerPorRepartidor(repartidorId, pendientes));
+    public ResponseEntity<List<DeliveryResponseDTO>> obtenerEntregasPorRepartidor(
+            @PathVariable Long repartidorId) {
+        return ResponseEntity.ok(deliveryService.obtenerEntregasPorRepartidor(repartidorId));
     }
 }
-
