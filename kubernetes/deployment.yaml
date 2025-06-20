@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-deliveries
+  labels:
+    app: microservice-deliveries
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice-deliveries
+  template:
+    metadata:
+      labels:
+        app: microservice-deliveries
+    spec:
+      containers:
+        - name: microservice-deliveries
+          image: laurapena290805/imagenes:microservice-deliveries
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SERVER_PORT
+              value: "8081"
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: credentials
+                  key: username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: credentials
+                  key: password
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: credentials
+                  key: url
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
