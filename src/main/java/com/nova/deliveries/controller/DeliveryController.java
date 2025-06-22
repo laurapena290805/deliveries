@@ -45,10 +45,14 @@ public class DeliveryController {
     }
 
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<DeliveryResponseDTO> cambiarEstado(
+    public ResponseEntity<?> cambiarEstado(
             @PathVariable Long id,
             @RequestParam DeliveryStatus estado) {
-        return ResponseEntity.ok(deliveryService.cambiarEstado(id, estado));
+        try {
+            return ResponseEntity.ok(deliveryService.cambiarEstado(id, estado));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/orden/{ordenId}")
