@@ -3,7 +3,7 @@ name: Deploy Spring Boot Microservice
 on:
   push:
     branches:
-      - main
+      - master
       - develop
 
 env:
