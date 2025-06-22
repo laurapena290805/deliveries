@@ -7,7 +7,7 @@ WORKDIR /app
 # Copia el .jar compilado desde tu máquina local al contenedor
 COPY target/*.jar app.jar
 
-# Expone el puerto 8089 (usado por Spring Boot)
+# Expone el puerto 8083 (usado por Spring Boot)
 EXPOSE 8083
 
 # Comando que se ejecuta al iniciar el contenedor
