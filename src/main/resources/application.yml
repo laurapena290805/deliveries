@@ -15,6 +15,32 @@ spring:
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+  boot:
+    admin:
+      client:
+        url: http://localhost:9090
+        username: admin
+        password: admin
+        instance:
+          metadata:
+            user.name: admin
+            user.password: admin
+
+    security:
+      user:
+        name: admin
+        password: admin
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+
 order:
   service:
     url: http://localhost:8000
