@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: microservice-deliveries
-          image: juanjoher/imagenes:microservice-deliveries
+          image: juanjoher/imagenes:deliveries
           ports:
             - containerPort: 8083
           env:
