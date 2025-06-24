@@ -6,6 +6,9 @@ on:
       - master
       - develop
 
+permissions:
+  contents: write
+
 env:
   IMAGE_NAME: juanjoher/imagenes:deliveries
   REGISTRY: docker.io
