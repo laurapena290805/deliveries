@@ -6,9 +6,10 @@ import com.nova.deliveries.entity.DeliveryStatus;
 import com.nova.deliveries.service.DeliveryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,23 +19,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(DeliveryController.class)
 public class DeliveryControllerTest2 {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private DeliveryService deliveryService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @TestConfiguration
+    static class TestConfig {
+        
+        @Bean
+        @Primary
+        public DeliveryService deliveryService() {
+            return mock(DeliveryService.class);
+        }
+    }
 
     @Test
     void crearEntrega_shouldReturnCreatedDelivery() throws Exception {
