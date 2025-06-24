@@ -64,7 +64,7 @@ class DeliveryControllerTest {
         when(deliveryService.cambiarEstado(1L, DeliveryStatus.EN_CAMINO))
                 .thenReturn(deliveryResponseDTO);
 
-        ResponseEntity<DeliveryResponseDTO> response =
+        ResponseEntity<?> response =
                 deliveryController.cambiarEstado(1L, DeliveryStatus.EN_CAMINO);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
